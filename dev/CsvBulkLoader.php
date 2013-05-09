@@ -157,32 +157,34 @@ class CsvBulkLoader extends BulkLoader {
 	 * Find an existing objects based on one or more uniqueness
 	 * columns specified via {@link self::$duplicateChecks}
 	 *
-	 * @param array $record CSV data column
-	 * @return unknown
+	 * @param array $csvRecord CSV data row
+	 * @return DataObject|false
 	 */
-	public function findExistingObject($record) {
+	public function findExistingObject($csvRecord) {
 		$SNG_objectClass = singleton($this->objectClass);
 		// checking for existing records (only if not already found)
-		foreach($this->duplicateChecks as $fieldName => $duplicateCheck) {
+		foreach($this->duplicateChecks as $csvHeading => $duplicateCheck) {
 			if(is_string($duplicateCheck)) {
-				$SQL_fieldName = Convert::raw2sql($duplicateCheck); 
-				if(!isset($record[$SQL_fieldName]) || empty($record[$SQL_fieldName])) { //skip current duplicate check if field value is empty
+				//skip current duplicate check if csvHeading doesn't exist in CSV, or value is empty
+				if(!isset($csvRecord[$csvHeading]) || empty($csvRecord[$duplicateCheck])) {
 					continue;
 				}
-				$SQL_fieldValue = Convert::raw2sql($record[$SQL_fieldName]);
-				$existingRecord = DataObject::get_one($this->objectClass, "\"$SQL_fieldName\" = '{$SQL_fieldValue}'");
-				if($existingRecord) return $existingRecord;
+				$SQL_csvValue = Convert::raw2sql($csvRecord[$duplicateCheck]);
+				$existingDataObject = DataObject::get_one($this->objectClass, "\"$duplicateCheck\" = '{$SQL_csvValue}'");
+				if($existingDataObject){
+					return $existingDataObject;	
+				}
 			} elseif(is_array($duplicateCheck) && isset($duplicateCheck['callback'])) {
 				if($this->hasMethod($duplicateCheck['callback'])) {
-					$existingRecord = $this->{$duplicateCheck['callback']}($record[$fieldName], $record);
+					$existingDataObject = $this->{$duplicateCheck['callback']}($csvRecord[$csvHeading], $csvRecord);
 				} elseif($SNG_objectClass->hasMethod($duplicateCheck['callback'])) {
-					$existingRecord = $SNG_objectClass->{$duplicateCheck['callback']}($record[$fieldName], $record);
+					$existingDataObject = $SNG_objectClass->{$duplicateCheck['callback']}($csvRecord[$csvHeading], $csvRecord);
 				} else {
 					user_error("CsvBulkLoader::processRecord():"
 						. " {$duplicateCheck['callback']} not found on importer or object class.", E_USER_ERROR);
 				}
-				if($existingRecord) {
-					return $existingRecord;
+				if($existingDataObject) {
+					return $existingDataObject;
 				}
 			} else {
 				user_error('CsvBulkLoader::processRecord(): Wrong format for $duplicateChecks', E_USER_ERROR);

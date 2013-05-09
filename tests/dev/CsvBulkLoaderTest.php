@@ -151,10 +151,10 @@ class CsvBulkLoaderTest extends SapphireTest {
 		$loader = new CsvBulkLoader('CsvBulkLoaderTest_Player');
 		$filepath = $this->getCurrentAbsolutePath() . '/CsvBulkLoaderTest_PlayersWithId.csv';
 		$loader->duplicateChecks = array(
-			'ExternalIdentifier' => 'ExternalIdentifier',
-			'NonExistantIdentifier' => 'ExternalIdentifier',
-			'ExternalIdentifier' => 'ExternalIdentifier',
-			'AdditionalIdentifier' => 'ExternalIdentifier'
+			'ExternalIdentifier' => 'ExternalIdentifier', //basic id matching
+			'Webmail' => 'Email', //map a differently named email field
+			'User' => 'Username', //the 'User' heading isn't in CSV
+			'AdditionalIdentifier' => 'ExternalIdentifier' //contains some sql unsafe data
 		);
 		$results = $loader->load($filepath);
 		$createdPlayers = $results->Created();
@@ -224,6 +224,8 @@ class CsvBulkLoaderTest_Player extends DataObject implements TestOnly {
 	
 	private static $db = array(
 		'FirstName' => 'Varchar(255)',
+		'Username' => 'Varchar',
+		'Email' => 'Varchar',
 		'Biography' => 'HTMLText',
 		'Birthday' => 'Date',
 		'ExternalIdentifier' => 'Varchar(255)', // used for uniqueness checks on passed property

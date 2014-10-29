@@ -176,8 +176,9 @@ class GDBackend extends Object implements Image_Backend {
 	public function resize($width, $height) {
 		if(!$this->gd) return;
 
-		$width = round($width);
-		$height = round($height);
+		//use whole numbers, and set values between 0 and 1 to 1
+		$width = $width < 1 ? ceil($width) : round($width);
+		$height = $height < 1 ? ceil($height) : round($height);
 		
 		// Check that a resize is actually necessary.
 		if ($width == $this->width && $height == $this->height) {

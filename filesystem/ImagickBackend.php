@@ -104,9 +104,10 @@ class ImagickBackend extends Imagick implements Image_Backend {
 	 */
 	public function resize($width, $height) {
 		if(!$this->valid()) return;
-	
-		$width = round($width);
-		$height = round($height);
+		
+		//use whole numbers, and set values between 0 and 1 to 1
+		$width = $width < 1 ? ceil($width) : round($width);
+		$height = $height < 1 ? ceil($height) : round($height);
 		
 		$geometry = $this->getImageGeometry();
 		
